@@ -10,17 +10,21 @@ blocks:
     task:
       prologue:
         commands:
+          - sudo useradd -m -d /home/runner -s /bin/bash runner
+          - echo "runner:runner"| sudo chpasswd
+          - sudo su -l -c "mkdir -p /home/runner/.kerl/installs" runner
+          - usermod -a -G docker runner
           - checkout
           - cd ../
-          - rm -rf .toolbox/
-          - mv classic-toolbox/ .toolbox
+          - sudo mv classic-toolbox/ /home/runner/.toolbox
+          - sudo su runner
           - bash .toolbox/install-toolbox
           - source .toolbox/toolbox
           - cd .toolbox
       jobs:
       - name: Sem version tests
         commands:
-          - sem-version ruby 2.6.1
+          - sem-version ruby 2.5.3
           - ruby --version | grep 2.5.3
           - sem-version ruby 2.5.2
           - ruby --version | grep 2.5.2
