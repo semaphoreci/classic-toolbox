@@ -1,0 +1,233 @@
+#!/bin/bash
+source ~/.toolbox/sem-install
+
+# Changing language versions
+
+VERSION="0.7"
+SUPPORTED_LANGUAGES=(elixir go java php ruby python node c cpp erlang scala)
+
+# Misc
+DATE_FORMAT='%H:%M %d/%m/%Y'
+
+################################################################################
+# Generic function which executes the passed 'command' to switch the version
+# Globals:
+#   language, language_version
+# Arguments:
+#   command
+# Returns:
+#  0, 1-127 (exit status of the language manager command)
+
+version::metrics() {
+  local cmd=$@
+  local language=${1#"version::change_"}
+  local version=$2
+  local start
+  local end
+  local duration
+  start=$(date +%s%3N)
+  $cmd
+  end=$(date +%s%3N)
+  duration=$(( $end - $start ))
+  echo "toolbox_sem_version_duration_${language}{version=\"${version}\"} ${duration}" >> /tmp/toolbox_metrics #in ms
+  echo "toolbox_sem_version_count_${language}{version=\"${version}\"} 1" >> /tmp/toolbox_metrics
+
+  return 0
+}
+
+version::change() {
+  command=$1
+  version::log "Changing '${language}' to version ${language_version}"
+
+  eval $command $language_version
+  ch_status=$?
+
+  return $ch_status
+}
+
+version::change_ruby() {
+  if ! [ -d ~/.rbenv/versions/${language_version} ]; then
+    sem-install ruby ${language_version}
+  fi
+  version::change "rbenv global"
+
+  return $?
+}
+
+version::change_node() {
+  version::change "nvm use"
+
+  return $?
+}
+
+version::change_elixir() {
+  if [ -z $(kiex list | grep ${language_version}) ];then
+    kiex install ${language_version}
+  fi
+
+  version::change "kiex use"
+
+  return $?
+}
+
+version::change_go() {
+  version::change "change-go-version"
+
+  return $?
+}
+
+version::change_java() {
+  version::change "change-java-version"
+
+  return $?
+}
+
+version::change_php() {
+  if ! [ -d ~/.phpbrew/php/php-${language_version} ]; then
+    sem-install php ${language_version}
+  fi
+  version::change "phpbrew use"
+
+  return $?
+}
+
+version::change_python() {
+  version::change "change-python-version"
+
+  return $?
+}
+
+version::change_c() {
+  version::change "change-gcc-version"
+
+  return $?
+}
+
+version::change_cpp() {
+  version::change "change-gcc-version"
+
+  return $?
+}
+version::change_scala() {
+  version::change "change-scala-version"
+
+  return $?
+}
+version::change_erlang() {
+  version::change "change-erlang-version"
+
+  return $?
+}
+################################################################################
+# End of language manager wrappers
+################################################################################
+
+
+################################################################################
+# Prints the usage
+# Globals:
+#   none
+# Arguments:
+#   none
+# Returns:
+#   none
+version::usage() {
+  echo -e "
+################################################################################
+sem-version ${VERSION} | Utility to change a selected languages active version
+
+Usage:
+  sem-version language version
+################################################################################"
+}
+
+################################################################################
+# Helper to print date in the given format
+# Globals:
+#   DATE_FORMAT
+# Arguments:
+#   message
+# Returns:
+#   none
+################################################################################
+version::date() {
+  date +"${DATE_FORMAT}"
+}
+
+################################################################################
+# Helper to display info messages
+# Globals:
+#   none
+# Arguments:
+#   message
+# Returns:
+#   none
+################################################################################
+version::log() {
+  echo -e "\n[$(version::date)]: $@" >&2
+}
+
+################################################################################
+# Helper function to show error messages and to terminate execution on error
+# Globals:
+#   DATE_FORMAT
+# Arguments:
+#   message
+# Returns:
+#   1
+################################################################################
+version::err() {
+  echo -e "\n! [$(version::date)]: $@" >&2
+
+  return 1
+}
+
+################################################################################
+# The main entrypoint to the script. Holds the switching logic.
+# Globals:
+#   SUPPORTED_LANGUAGES
+# Arguments:
+#   'language', 'version'
+# Returns:
+#   none
+################################################################################
+version::main() {
+  if ! [[ $# -eq 2 ]]; then
+    version::usage
+    version::err "Unsupported number of arguments provided!"
+
+    return $?
+  fi
+
+  language=$1
+  language_version=$2
+
+  for (( i=0; i < ${#SUPPORTED_LANGUAGES}; i++ )); do
+    if [[ ${SUPPORTED_LANGUAGES[i]} -eq $language ]]; then
+      fn_name="version::change_${language}"
+
+      if ! [[ $(type -t $fn_name) == function ]]; then
+        version::err "Function '${fn_name}' not implemented. Language '${language}' might not be supported."
+
+        return $?
+      fi
+
+      version::metrics version::change_${language} $language_version
+      fn_status=$?
+
+      if [[ fn_status -ne 0 ]]; then
+        version::err "Failed to switch version.\nLog:\n$log"
+        echo "toolbox_sem_version_failure_rate_${language}{version=\"${version}\"} 1" >> /tmp/toolbox_metrics
+        return $?
+      fi
+
+      version::log "Switch successful."
+
+      break
+    fi
+  done
+}
+
+sem-version() {
+  version::main "$@"
+}

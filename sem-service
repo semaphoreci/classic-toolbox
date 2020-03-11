@@ -1,0 +1,356 @@
+#!/bin/bash
+
+# Misc
+DATE_FORMAT='%H:%M %d/%m/%Y'
+
+service::pull_image() {
+  local image_name=$1
+
+  if [[ -z $image_name ]]; then
+    service:err "Image name can't be empty"
+  fi
+
+  if ! echo $image_name | grep -E '^[[:alnum:]]+(:[[:alnum:]]+.*)?$' &>/dev/null; then
+    service::err "Invalid image name provided '${image_name}'"
+  fi
+
+  service::duration service::run_cmd docker pull $image_name download $(echo ${image_name%%:*})
+}
+
+service::start_mysql() {
+  service_version=$1
+  shift
+  docker_params="$@"
+
+  service::pull_image "mysql:$service_version"
+  docker_output=$(docker run $docker_params mysql:$service_version)
+  # run only if previous command exited successfully
+  service::duration sem-dockerize 3306 boot mysql
+
+  # if not started in 30 seconds print logs and exit
+  echo "done."
+  echo "MySQL $service_version is running at 0.0.0.0:3306"
+  echo "To access it use username 'root' and blank password."
+
+}
+
+service::start_postgres() {
+  service_version=$1
+  shift
+  docker_params="$@"
+
+  service::pull_image "postgres:$service_version"
+  docker_output=$(docker run $docker_params postgres:$service_version)
+  # run only if previous command exited successfully
+  service::duration sem-dockerize 5432 boot postgress
+
+  # if not started in 30 seconds print logs and exit
+  echo "done."
+  echo "PostgreSQL $service_version is running at 0.0.0.0:5432"
+  echo "To access it use username 'postgres' and blank password."
+
+}
+
+service::start_redis() {
+  service_version=$1
+  shift
+  docker_params="$@"
+  service::pull_image "redis:$service_version"
+  docker_output=$(docker run $docker_params redis:$service_version)
+  # run only if previous command exited successfully
+  service::duration sem-dockerize 6379 boot redis
+
+  # if not started in 30 seconds print logs and exit
+  echo "done."
+  echo "Redis $service_version is running at 0.0.0.0:6379"
+
+}
+
+service::start_memcached() {
+  service_version="${1:-1.5}"
+  service::pull_image "memcached:$service_version"
+
+  docker_output=$(docker run --net=host --rm --name memcached -d memcached:$service_version)
+  # run only if previous command exited successfully
+  service::duration sem-dockerize 11211 boot memcached
+
+  # if not started in 30 seconds print logs and exit
+  echo "done."
+  echo "memcached $service_version is running at 0.0.0.0:11211"
+
+}
+
+service::start_mongodb() {
+  service_version=$1
+  shift
+  docker_params="$@"
+
+  service::pull_image "mongo:$service_version"
+  docker_output=$(docker run $docker_params mongo:$service_version)
+  # run only if previous command exited successfully
+  service::duration sem-dockerize 27017 -timeout 30s 2>/dev/null boot mongodb
+
+  # if not started in 30 seconds print logs and exit
+  echo "done."
+  echo "mongodb $service_version is running at 0.0.0.0:27017"
+
+}
+
+service::start_elasticsearch() {
+  service_version="${1:-6.5.1}"
+  service::pull_image "elasticsearch:$service_version"
+
+  docker_output=$(docker run --net=host --rm --name elasticsearch -e "discovery.type=single-node" -d elasticsearch:$service_version)
+
+  # run only if previous command exited successfully
+  service::duration sem-dockerize 9200 boot elasticseach
+
+  # if not started in 30 seconds print logs and exit
+  echo "done."
+  echo "elasticsearch $service_version is accessible at 0.0.0.0:9200 and 0.0.0.0:9300"
+
+}
+
+service::start_rabbitmq() {
+  service_version="${1:-3.8.2}"
+  service::pull_image "rabbitmq:$service_version"
+
+  docker_output=$(docker run --net=host --rm --name rabbitmq --hostname rabbitmq -d rabbitmq:$service_version)
+
+  # run only if previous command exited successfully
+  service::duration sem-dockerize 5672 boot rabbitmq
+
+  # if not started in 30 seconds print logs and exit
+  echo "done."
+  echo "rabbitmq $service_version is accessible at 0.0.0.0:5672"
+
+}
+
+service::start() {
+  service_name=$1
+  service_version=$2
+  if [ -z "$service_name" ]; then
+    service::print_usage
+    exit 1
+  fi
+
+  echo -n "Starting $service_name..."
+
+  case "$service_name" in
+    "mysql" )
+      shift
+      service_version=$(sem-service-check-params mysql $@)
+      service::duration service::start_mysql $service_version total $service_name
+      exit 0
+      ;;
+    "postgres" )
+      shift
+      service_version=$(sem-service-check-params postgres $@)
+      service::duration service::start_postgres $service_version total $service_name
+      exit 0
+      ;;
+    "redis" )
+      shift
+      service_version=$(sem-service-check-params redis $@)
+      service::duration service::start_redis $service_version total $service_name
+      exit 0
+      ;;
+    "memcached" )
+      shift
+
+      service::duration service::start_memcached $service_version total $service_name
+      exit 0
+      ;;
+    "mongodb" )
+      shift
+      service_version=$(sem-service-check-params mongodb $@)
+      service::duration service::start_mongodb $service_version total $service_name
+      exit 0
+      ;;
+    "elasticsearch" )
+      shift
+
+      service::duration service::start_elasticsearch $service_version total $service_name
+      exit 0
+      ;;
+    "rabbitmq" )
+      shift
+
+      service::duration service::start_rabbitmq $service_version total $service_name
+      exit 0
+      ;;
+
+    * )
+      service::print_usage
+      exit 1
+      ;;
+  esac
+}
+
+
+service::stop() {
+  local service_name
+  local service_check_log
+
+  service_name=$1
+  service_check_log=$( service::status $service_name &>/dev/null )
+  service_status=$?
+
+  if [[ $service_status -eq 0 ]]; then
+    stop_output=$( service::run_cmd docker stop $service_name )
+
+    service::log "'${service_name}' stopped."
+  else
+    service::log "No running service with name '${service_name}' was found. Skipping."
+  fi
+
+  return 0
+}
+
+
+################################################################################
+# Service status
+# Globals:
+#   none
+# Arguments:
+#   service_name
+# Returns:
+#   0,1...n
+################################################################################
+service::status() {
+  local service_name
+  local docker_ps
+
+  service_name=$1
+  docker_ps=$(docker ps | grep $service_name &>/dev/null )
+  service_status=$?
+
+  if [[ $service_status -eq 0 ]]; then
+    service::log "${service_name} running."
+  else
+    service::log "'${service_name}' not running."
+  fi
+
+  return $service_status
+}
+
+
+################################################################################
+# Helper for running commands with the ability to dry-run
+# Globals:
+#   DRYRUN
+# Arguments:
+#   command
+# Returns:
+#   0,1...n
+################################################################################
+service::run_cmd() {
+  local cmd=$@
+  local out=""
+  local status=0
+
+  if [[ -n $DRYRUN ]]; then
+    service::log "Dry-running '${cmd}'"
+  else
+    out=$($cmd 2>&1)
+    status=$?
+  fi
+
+  if ! [[ $status -eq 0 ]]; then
+    service::err "Failed to run command '${cmd}'\n\nReason:\n${out}"
+  fi
+
+  return $status
+}
+
+
+################################################################################
+# Gets port information about the running service
+# Globals:
+#   none
+# Arguments:
+#   service_name
+# Returns:
+#   port
+################################################################################
+service::port_info() {
+  local service_name
+  local service_check_log
+
+  service_name=$1
+  port_check_log=$( service::run_cmd sudo netstat -tlpn | grep $service_name 2>&1 )
+  port_status=$?
+
+  if [[ $service_status -eq 0 ]]; then
+    listens_on=$( echo ${port_check_log} | awk '{print $4}' )
+
+    echo "Listens on ${listens_on}"
+  else
+    echo "No port found for '${service_name}'."
+  fi
+
+  return 0
+}
+
+service::log() {
+  echo -e "[$(date +"${DATE_FORMAT}")]: $@" >&2
+}
+
+service::err() {
+  echo -e "\n! [$(date +"${DATE_FORMAT}")]: $@\n" >&2
+
+  exit 1
+}
+
+service::print_usage() {
+  echo -e "\nsem-service [start|stop|status] [service] [version]\n"
+
+  echo "Available services:"
+  echo "mysql (default: 5.6)"
+  echo "postgres (default: 9.6)"
+  echo "redis (default: 4)"
+  echo "memcached (default: 1.5)"
+  echo "mongodb (default: 4.5)"
+  echo "elasticsearch (default: 6.5.1)"
+}
+
+service::duration() {
+  local cmd=${@:1:$#-2}
+  local service=$(echo "${@: -1}")
+  local type=$(echo "${@: -2:1}")
+  local start
+  local end
+  local duration
+  start=$(date +%s%3N)
+  $cmd
+  end=$(date +%s%3N)
+  duration=$(( $end - $start ))
+  echo "toolbox_sem_service_${type}_${service} ${duration}" >> /tmp/toolbox_metrics #in ms
+
+  return 0
+}
+
+service::main () {
+  case "$1" in
+    "start" )
+      shift
+
+      service::start "$@"
+      ;;
+    "stop" )
+      shift
+
+      service::stop "$@"
+      ;;
+    "status" )
+      shift
+
+      service::status "$@"
+      ;;
+    * )
+      service::print_usage
+      ;;
+  esac
+}
+
+service::main "$@"
