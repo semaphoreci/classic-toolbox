@@ -13,7 +13,7 @@ blocks:
           - checkout
           - cd ../
           - rm -rf .toolbox/
-          - mv toolbox/ .toolbox
+          - mv classic-toolbox/ .toolbox
           - bash .toolbox/install-toolbox
           - source .toolbox/toolbox
           - cd .toolbox
