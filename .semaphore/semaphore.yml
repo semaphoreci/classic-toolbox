@@ -17,128 +17,127 @@ blocks:
           - checkout
           - cd ../
           - sudo mv classic-toolbox/ /home/runner/.toolbox
-          - sudo su runner
-          - bash .toolbox/install-toolbox
-          - source .toolbox/toolbox
-          - cd .toolbox
+          - sudo su -l -c "bash .toolbox/install-toolbox" runner
+          - sudo su -l -c "source .toolbox/toolbox" runner
+          - sudo su -l -c "cd .toolbox" runner
       jobs:
       - name: Sem version tests
         commands:
-          - sem-version ruby 2.5.3
-          - ruby --version | grep 2.5.3
-          - sem-version ruby 2.5.2
-          - ruby --version | grep 2.5.2
-          - sem-version ruby 2.5.3
-          - ruby --version | grep 2.5.3
-          - sem-version ruby 2.3.7
-          - ruby --version | grep 2.3.7
-          - sem-version c 8
-          - gcc --version | grep 8.3.0
-          - sem-version cpp 7
-          - gcc --version | grep 7.4.0
-          - sem-version php 7.2.10
-          - php -v | grep 7.2.10
-          - sem-version php 7.0.32
-          - php -v | grep 7.0.32
+          - sudo su -l -c "sem-version ruby 2.5.3" runner
+          - sudo su -l -c "ruby --version | grep 2.5.3" runner
+          - sudo su -l -c "sem-version ruby 2.5.2" runner
+          - sudo su -l -c "ruby --version | grep 2.5.2" runner
+          - sudo su -l -c "sem-version ruby 2.5.3" runner
+          - sudo su -l -c "ruby --version | grep 2.5.3" runner
+          - sudo su -l -c "sem-version ruby 2.3.7" runner
+          - sudo su -l -c "ruby --version | grep 2.3.7" runner
+          - sudo su -l -c "sem-version c 8" runner
+          - sudo su -l -c "gcc --version | grep 8.3.0" runner
+          - sudo su -l -c "sem-version cpp 7" runner
+          - sudo su -l -c "gcc --version | grep 7.4.0" runner
+          - sudo su -l -c "sem-version php 7.2.10" runner
+          - sudo su -l -c "php -v | grep 7.2.10" runner
+          - sudo su -l -c "sem-version php 7.0.32" runner
+          - sudo su -l -c "php -v | grep 7.0.32" runner
 
       - name: MySQL
         commands:
-          - sem-service start mysql
-          - mysql --host=0.0.0.0 -uroot -e "create database fooo"
-          - mysql --host=0.0.0.0 -uroot -e "show databases" | grep fooo
-          - mysql --host=0.0.0.0 -uroot -e 'SHOW VARIABLES like "version";' | grep 5.6
-          - sem-service status mysql
-          - sem-service stop mysql
-          - sem-service start mysql 5.7
-          - mysql --host=0.0.0.0 -uroot -e "create database fooo"
-          - mysql --host=0.0.0.0 -uroot -e "show databases" | grep fooo
-          - mysql --host=0.0.0.0 -uroot -e 'SHOW VARIABLES like "version";' | grep 5.7
-          - sem-service status mysql
-          - sem-service stop mysql
-          - sem-service start mysql 8.0.19 --username=test --password=test --garbage else
-          - mysql  -utest -ptest -e "show databases"
-          - mysql  -utest -ptest -e 'SHOW VARIABLES like "version";'
-          - sem-service stop mysql
+          - sudo su -l -c "sem-service start mysql" runner
+          - sudo su -l -c "mysql --host=0.0.0.0 -uroot -e 'create database fooo'" runner
+          - sudo su -l -c "mysql --host=0.0.0.0 -uroot -e 'show databases' | grep fooo" runner
+          - sudo su -l -c "mysql --host=0.0.0.0 -uroot -e 'SHOW VARIABLES like \'version\';' | grep 5.6" runner
+          - sudo su -l -c "sem-service status mysql" runner
+          - sudo su -l -c "sem-service stop mysql" runner
+          - sudo su -l -c "sem-service start mysql 5.7" runner
+          - sudo su -l -c "mysql --host=0.0.0.0 -uroot -e 'create database fooo'" runner
+          - sudo su -l -c "mysql --host=0.0.0.0 -uroot -e 'show databases' | grep fooo" runner
+          - sudo su -l -c "mysql --host=0.0.0.0 -uroot -e 'SHOW VARIABLES like \'version\';' | grep 5.7" runner
+          - sudo su -l -c "sem-service status mysql" runner
+          - sudo su -l -c "sem-service stop mysql" runner
+          - sudo su -l -c "sem-service start mysql 8.0.19 --username=test --password=test --garbage else" runner
+          - sudo su -l -c "mysql  -utest -ptest -e 'show databases'" runner
+          - sudo su -l -c "mysql  -utest -ptest -e 'SHOW VARIABLES like \'version\';'" runner
+          - sudo su -l -c "sem-service stop mysql" runner
 
       - name: PostgreSQL
         commands:
-          - sem-service start postgres
-          - createdb -U postgres -h 0.0.0.0 fooo
-          - psql -h 0.0.0.0 -U postgres -c "\l" | grep fooo
-          - psql -h 0.0.0.0 -U postgres -c "SELECT version()" | grep 9.6
-          - sem-service status postgres
-          - sem-service stop postgres
-          - sem-service start postgres 11
-          - createdb -U postgres -h 0.0.0.0 fooo
-          - psql -h 0.0.0.0 -U postgres -c "\l" | grep fooo
-          - psql -h 0.0.0.0 -U postgres -c "SELECT version()" | grep 11
-          - sem-service status postgres
-          - sem-service stop postgres
-          - sem-service start postgres 11 --username=xxx --password=xxx --db=xxx --garbage else
-          - createdb -U xxx  -h 0.0.0.0 fooo
-          - psql -h 0.0.0.0 -U xxx -c "\l"
-          - psql -U xxx -c "SELECT version()" | grep 11
-          - sem-service status postgres
+          - sudo su -l -c "sem-service start postgres" runner
+          - sudo su -l -c "createdb -U postgres -h 0.0.0.0 fooo" runner
+          - sudo su -l -c "psql -h 0.0.0.0 -U postgres -c '\l' | grep fooo" runner
+          - sudo su -l -c "psql -h 0.0.0.0 -U postgres -c 'SELECT version()' | grep 9.6" runner
+          - sudo su -l -c "sem-service status postgres" runner
+          - sudo su -l -c "sem-service stop postgres" runner
+          - sudo su -l -c "sem-service start postgres 11" runner
+          - sudo su -l -c "createdb -U postgres -h 0.0.0.0 fooo" runner
+          - sudo su -l -c "psql -h 0.0.0.0 -U postgres -c '\l' | grep fooo" runner
+          - sudo su -l -c "psql -h 0.0.0.0 -U postgres -c 'SELECT version()' | grep 11" runner
+          - sudo su -l -c "sem-service status postgres" runner
+          - sudo su -l -c "sem-service stop postgres" runner
+          - sudo su -l -c "sem-service start postgres 11 --username=xxx --password=xxx --db=xxx --garbage else" runner
+          - sudo su -l -c "createdb -U xxx  -h 0.0.0.0 fooo" runner
+          - sudo su -l -c "psql -h 0.0.0.0 -U xxx -c '\l'" runner
+          - sudo su -l -c "psql -U xxx -c 'SELECT version()' | grep 11" runner
+          - sudo su -l -c "sem-service status postgres" runner
 
       - name: Redis
         commands:
-          - sem-service start redis
-          - sem-service status redis
-          - sem-service stop redis
-          - sem-service start redis 5
-          - sem-service status redis
+          - sudo su -l -c "sem-service start redis" runner
+          - sudo su -l -c "sem-service status redis" runner
+          - sudo su -l -c "sem-service stop redis" runner
+          - sudo su -l -c "sem-service start redis 5" runner
+          - sudo su -l -c "sem-service status redis" runner
 
       - name: Memcached
         commands:
-          - sem-service start memcached
-          - sem-service status memcached
+          - sudo su -l -c "sem-service start memcached" runner
+          - sudo su -l -c "sem-service status memcached" runner
 
       - name: RabbitMQ
         commands:
-          - sem-service start rabbitmq
-          - sem-service status rabbitmq
+          - sudo su -l -c "sem-service start rabbitmq" runner
+          - sudo su -l -c "sem-service status rabbitmq" runner
 
       - name: mongodb
         commands:
-          - sudo apt-get install -y mongodb-clients
-          - sem-service start mongodb
-          - curl http://localhost:27017 | grep "It looks like you are trying to access MongoDB over HTTP on the native driver port."
-          - sem-service status mongodb
-          - sem-service stop mongodb
-          - sem-service start mongodb 3.2
-          - curl http://localhost:27017 | grep "It looks like you are trying to access MongoDB over HTTP on the native driver port."
-          - sem-service status mongodb
-          - sem-service stop mongodb
-          - sem-service stop mongodb
-          - sem-service start mongodb 4.2 --username=xxx --password=xxx
-          - echo "show dbs" | mongo -u "xxx" -p "xxx" 127.0.0.1  --authenticationDatabase "admin"
+          - sudo su -l -c "sudo apt-get install -y mongodb-clients" runner
+          - sudo su -l -c "sem-service start mongodb" runner
+          - sudo su -l -c "curl http://localhost:27017 | grep 'It looks like you are trying to access MongoDB over HTTP on the native driver port.'" runner
+          - sudo su -l -c "sem-service status mongodb" runner
+          - sudo su -l -c "sem-service stop mongodb" runner
+          - sudo su -l -c "sem-service start mongodb 3.2" runner
+          - sudo su -l -c "curl http://localhost:27017 | grep 'It looks like you are trying to access MongoDB over HTTP on the native driver port.'" runner
+          - sudo su -l -c "sem-service status mongodb" runner
+          - sudo su -l -c "sem-service stop mongodb" runner
+          - sudo su -l -c "sem-service stop mongodb" runner
+          - sudo su -l -c "sem-service start mongodb 4.2 --username=xxx --password=xxx" runner
+          - sudo su -l -c "echo 'show dbs' | mongo -u 'xxx' -p 'xxx' 127.0.0.1  --authenticationDatabase 'admin'" runner
 
       - name: elasticsearch
         commands:
-          - sem-service start elasticsearch
-          - curl -XGET '0.0.0.0:9200/_cluster/health?pretty' | grep green
-          - sem-service status elasticsearch
-          - curl -XGET '0.0.0.0:9200' | grep 6.5.1
-          - sem-service stop elasticsearch
-          - sem-service start elasticsearch 6.5.2
-          - curl -XGET '0.0.0.0:9200/_cluster/health?pretty' | grep green
-          - sem-service status elasticsearch
-          - curl -XGET '0.0.0.0:9200' | grep 6.5.2
-          - sem-service stop elasticsearch
+          - sudo su -l -c "sem-service start elasticsearch" runner
+          - sudo su -l -c "curl -XGET '0.0.0.0:9200/_cluster/health?pretty' | grep green" runner
+          - sudo su -l -c "sem-service status elasticsearch" runner
+          - sudo su -l -c "curl -XGET '0.0.0.0:9200' | grep 6.5.1" runner
+          - sudo su -l -c "sem-service stop elasticsearch" runner
+          - sudo su -l -c "sem-service start elasticsearch 6.5.2" runner
+          - sudo su -l -c "curl -XGET '0.0.0.0:9200/_cluster/health?pretty' | grep green" runner
+          - sudo su -l -c "sem-service status elasticsearch" runner
+          - sudo su -l -c "curl -XGET '0.0.0.0:9200' | grep 6.5.2" runner
+          - sudo su -l -c "sem-service stop elasticsearch" runner
 
       - name: Erlang change test
         commands:
-          - echo "Erlang version"
-          - erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell
-          - sem-version erlang 20
-          - erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell
-          - sem-version erlang 21
-          - erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell
+          - sudo su -l -c "echo 'Erlang version'" runner
+          - sudo su -l -c "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell" runner
+          - sudo su -l -c "sem-version erlang 20" runner
+          - sudo su -l -c "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell" runner
+          - sudo su -l -c "sem-version erlang 21" runner
+          - sudo su -l -c "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell" runner
 
       - name: scala change test
         commands:
-          - echo "actual scala version"
-          - scala -version
-          - sem-version scala 2.11
-          - sem-version scala 2.12
+          - sudo su -l -c "echo 'actual scala version'" runner
+          - sudo su -l -c "scala -version" runner
+          - sudo su -l -c "sem-version scala 2.11" runner
+          - sudo su -l -c "sem-version scala 2.12" runner
 
