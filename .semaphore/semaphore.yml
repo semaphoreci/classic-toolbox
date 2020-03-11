@@ -17,9 +17,9 @@ blocks:
           - checkout
           - cd ../
           - sudo mv classic-toolbox/ /home/runner/.toolbox
-          - sudo su -l -c "bash .toolbox/install-toolbox" runner
-          - sudo su -l -c "source .toolbox/toolbox" runner
-          - sudo su -l -c "cd .toolbox" runner
+          - sudo su -l -t -c "bash .toolbox/install-toolbox" runner
+          - sudo su -l -t -c "source .toolbox/toolbox" runner
+          - sudo su -l -t -c "cd .toolbox" runner
       jobs:
       - name: Sem version tests
         commands:
