@@ -1,0 +1,3 @@
+sem-service start memcached 
+sem-service status memcached
+ 

@@ -1,0 +1,16 @@
+sem-service start mysql 
+mysql -uroot -psemaphoredb -e 'create database fooo' 
+mysql -uroot -psemaphoredb -e 'show databases' | grep fooo 
+mysql -uroot -psemaphoredb -e 'SHOW VARIABLES like "version";' | grep 5.6 
+sem-service status mysql 
+sem-service stop mysql 
+sem-service start mysql 5.7 
+mysql -uroot -psemaphoredb -e 'create database fooo' 
+mysql -uroot -psemaphoredb -e 'show databases' | grep fooo 
+mysql -uroot -psemaphoredb -e 'SHOW VARIABLES like "version";' | grep 5.7 
+sem-service status mysql 
+sem-service stop mysql 
+sem-service start mysql 8.0.19 --username=test --password=test --garbage else 
+mysql  -utest -ptest -e 'show databases' 
+mysql  -utest -ptest -e 'SHOW VARIABLES like "version";' 
+sem-service stop mysql 

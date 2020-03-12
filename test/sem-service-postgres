@@ -1,0 +1,17 @@
+sem-service start postgres 
+createdb fooo 
+psql -c '\l' | grep fooo 
+psql -c 'SELECT version()' | grep 9.6 
+sem-service status postgres 
+sem-service stop postgres 
+sem-service start postgres 11 
+createdb fooo 
+psql -c '\l' | grep fooo 
+psql -c 'SELECT version()' | grep 11 
+sem-service status postgres 
+sem-service stop postgres 
+sem-service start postgres 11 --username=xxx --password=xxx --db=xxx --garbage else 
+createdb -U xxx   fooo 
+psql  -U xxx -c '\l' 
+psql -U xxx -c 'SELECT version()' | grep 11 
+sem-service status postgres 
