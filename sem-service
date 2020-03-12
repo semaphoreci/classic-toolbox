@@ -10,9 +10,9 @@ service::pull_image() {
     service:err "Image name can't be empty"
   fi
 
-  if ! echo $image_name | grep -E '^[[:alnum:]]+(:[[:alnum:]]+.*)?$' &>/dev/null; then
-    service::err "Invalid image name provided '${image_name}'"
-  fi
+#  if ! echo $image_name | grep -E '^[[:alnum:]]+(:[[:alnum:]]+.*)?$' &>/dev/null; then
+#    service::err "Invalid image name provided '${image_name}'"
+#  fi
 
   service::duration service::run_cmd docker pull $image_name download $(echo ${image_name%%:*})
 }
@@ -39,10 +39,10 @@ service::start_postgres() {
   shift
   docker_params="$@"
 
-  service::pull_image "postgres:$service_version"
-  docker_output=$(docker run $docker_params postgres:$service_version)
+  service::pull_image "postgis/postgis:$service_version"
+  docker_output=$(docker run $docker_params postgis/postgis:$service_version)
   # run only if previous command exited successfully
-  service::duration sem-dockerize 5432 boot postgress
+  service::duration sem-dockerize 5432 boot postgres
 
   # if not started in 30 seconds print logs and exit
   echo "done."
