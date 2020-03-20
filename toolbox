@@ -1,0 +1,2 @@
+source ~/.toolbox/sem-version
+echo "source ~/.toolbox/sem-version" >> ~/.bashrc
