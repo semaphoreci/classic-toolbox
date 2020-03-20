@@ -54,12 +54,12 @@ params-check::postgres () {
     params="${tmp:-$default_params}"
   fi
   if [ "$default_params" != "$params" ];then
-    username="";password="";db=""; dbname="";
+    dbname="";
     for words in $params; do
       case $words in
        --username=* )
          username_local=$(echo $words|cut -d'=' -f2)
-         [ -n "$username_local" ] && username=$" -e POSTGRES_USER=$username"
+         [ -n "$username_local" ] && username=" -e POSTGRES_USER=$username_local"
        ;;
        --password=* )
          password_local=$(echo $words|cut -d'=' -f2) 
