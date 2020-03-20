@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -u
+
+IMAGE=semaphore-vm.qcow2
+
+sudo virt-install --cpu Haswell,+hle,+rtm \
+  --vcpus 2 \
+  --name semaphore-s2-vm \
+  --ram 2048 \
+  --os-type=linux \
+  --os-variant=ubuntu16.04 \
+  --network bridge=virbr0,model=virtio \
+  --disk $IMAGE,device=disk,bus=virtio,cache=none,format=qcow2 \
+  --import \
+  --vnc \
+  --force \
+  --noautoconsole

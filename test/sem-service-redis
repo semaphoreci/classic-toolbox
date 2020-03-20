@@ -1,0 +1,5 @@
+sem-service start redis
+sem-service status redis
+sem-service stop redis
+sem-service start redis 5
+sem-service status redis

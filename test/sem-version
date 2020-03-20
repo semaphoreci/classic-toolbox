@@ -1,0 +1,26 @@
+sem-version ruby 2.5.3
+ruby --version
+sem-version ruby 2.5.2
+ruby --version
+sem-version ruby 2.5.3
+ruby --version
+sem-version ruby 2.3.7
+ruby --version
+sem-version c 8
+gcc --version
+sem-version c 7
+gcc --version
+sem-version php 7.2.10
+php -v
+sem-version php 7.0.32
+php -v
+sem-version php 7.1.33
+php -v
+erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'-noshell
+sem-version erlang 20
+erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'-noshell
+sem-version erlang 21
+erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'-noshell
+scala -version
+sem-version scala 2.11
+sem-version scala 2.12

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 params-check::mysql () {
-  default_params='--net=host --rm -d -e MYSQL_ALLOW_EMPTY_PASSWORD=true --name mysql -v /var/run/mysqld:/var/run/mysqld '
+  default_params='--net=host --rm -d -e MYSQL_ALLOW_EMPTY_PASSWORD=true -e MYSQL_ROOT_PASSWORD=semaphoredb --name mysql -v /var/run/mysqld:/var/run/mysqld '
   service_version="5.6"
   sudo mkdir -p /var/run/mysqld ; sudo chmod -R 0777 /var/run/mysqld
   params=""
@@ -36,27 +36,34 @@ params-check::mysql () {
 }
 
 params-check::postgres () {
-  default_params='--net=host --rm -d -e POSTGRES_PASSWORD=semaphore --name postgres -v /var/run/postgresql:/var/run/postgresql'
+  default_params='--net=host --rm -d --name postgres -v /var/run/postgresql:/var/run/postgresql '
+  declare -A version_map
+  version_map=(["9.6"]="9.6-2.5" ["10"]="10-3.0" ["11"]="11-3.0" ["12"]="12-3.0")
   service_version="9.6"
   sudo mkdir -p /var/run/postgresql ; sudo chmod -R 0777 /var/run/postgresql
+  username=" -e POSTGRES_USER=runner "
+  password=" -e POSTGRES_PASSWORD=semaphoredb "
+  db=""
   params=""
   if [ "${1:0:1}" == "-" ];then
     params="$@"
   else
     service_version="${1:-$service_version}"
+    service_version="${version_map[$service_version]}"
     tmp="${@:2}"
     params="${tmp:-$default_params}"
   fi
   if [ "$default_params" != "$params" ];then
-    username=""; password=""; db=""; dbname="";
+    username="";password="";db=""; dbname="";
     for words in $params; do
       case $words in
        --username=* )
-         username=" -e POSTGRES_USER=$(echo $words|cut -d'=' -f2) "
+         username_local=$(echo $words|cut -d'=' -f2)
+         [ -n "$username_local" ] && username=$" -e POSTGRES_USER=$username"
        ;;
        --password=* )
-         password=$(echo $words|cut -d'=' -f2) 
-         password=" -e POSTGRES_PASSWORD=${password:-'postgres'}"
+         password_local=$(echo $words|cut -d'=' -f2) 
+         [ -n "$password_local" ] && password=" -e POSTGRES_PASSWORD=$password_local"
        ;;
        --db=* )
          dbname=$(echo $words|cut -d'=' -f2)
@@ -66,14 +73,14 @@ params-check::postgres () {
       esac
     done
     [ "$dbname" ] && db=" -e POSTGRES_DB=$dbname"
-    [ "$username$password" ] && default_params="$default_params$username$password$db "
   fi
+  default_params="$default_params$username$password$db "
   echo "$service_version $default_params"
 }
 
 params-check::redis () {
   default_params='--net=host --rm --name redis -d'
-  service_version="4"
+  service_version="5.0.7"
   params=""
   if [ "${1:0:1}" == "-" ];then
     params="$@"
