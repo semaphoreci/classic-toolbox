@@ -36,13 +36,14 @@ params-check::mysql () {
 }
 
 params-check::postgres () {
-  default_params='--net=host --rm -d -e POSTGRES_PASSWORD=semaphoredb --name postgres -v /var/run/postgresql:/var/run/postgresql -e POSTGRES_USER=runner -e POSTGRES_PASSWORD=semaphoredb'
+  default_params='--net=host --rm -d --name postgres -v /var/run/postgresql:/var/run/postgresql '
   declare -A version_map
   version_map=(["9.6"]="9.6-2.5" ["10"]="10-3.0" ["11"]="11-3.0" ["12"]="12-3.0")
   service_version="9.6"
   sudo mkdir -p /var/run/postgresql ; sudo chmod -R 0777 /var/run/postgresql
-  username=""
-  password=""
+  username=" -e POSTGRES_USER=runner "
+  password=" -e POSTGRES_PASSWORD=semaphoredb "
+  db=""
   params=""
   if [ "${1:0:1}" == "-" ];then
     params="$@"
@@ -72,8 +73,8 @@ params-check::postgres () {
       esac
     done
     [ "$dbname" ] && db=" -e POSTGRES_DB=$dbname"
-    [ "$username$password" ] && default_params="$default_params$username$password$db "
   fi
+  default_params="$default_params$username$password$db "
   echo "$service_version $default_params"
 }
 
