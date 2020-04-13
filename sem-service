@@ -30,7 +30,6 @@ service::start_mysql() {
   # if not started in 30 seconds print logs and exit
   echo "done."
   echo "MySQL $service_version is running at 0.0.0.0:3306"
-  echo "To access it use username 'root' and blank password."
 
 }
 
@@ -39,10 +38,26 @@ service::start_postgres() {
   shift
   docker_params="$@"
 
-  service::pull_image "postgis/postgis:$service_version"
-  docker_output=$(docker run $docker_params postgis/postgis:$service_version)
+  service::pull_image "postgres:$service_version"
+  docker_output=$(docker run $docker_params postgres:$service_version)
   # run only if previous command exited successfully
   service::duration sem-dockerize 5432 boot postgres
+  echo "done."
+  echo "PostgreSQL $service_version is running at 0.0.0.0:5432"
+
+}
+
+service::start_postgis() {
+  service_version=$1
+  shift
+  docker_params="$@"
+
+  service::pull_image "postgis/postgis:$service_version"
+  docker_output=$(docker run $docker_params "postgis/postgis:$service_version")
+  # run only if previous command exited successfully
+  service::duration sem-dockerize 5432 boot postgis
+  echo "done."
+  echo "PostgreSQL with postgis $service_version is running at 0.0.0.0:5432"
 
 }
 
@@ -166,18 +181,28 @@ service::start() {
   case "$service_name" in
     "mysql" )
       shift
+
       service_version=$(sem-service-check-params mysql $@)
       service::duration service::start_mysql $service_version total $service_name
       exit 0
       ;;
     "postgres" )
       shift
+
       service_version=$(sem-service-check-params postgres $@)
       service::duration service::start_postgres $service_version total $service_name
       exit 0
       ;;
+    "postgis" )
+      shift
+    
+      service_version=$(sem-service-check-params postgis $@)
+      service::duration service::start_postgis $service_version total $service_name
+      exit 0
+      ;;
     "redis" )
       shift
+
       service_version=$(sem-service-check-params redis $@)
       service::duration service::start_redis $service_version total $service_name
       exit 0
@@ -347,6 +372,7 @@ service::print_usage() {
   echo "Available services:"
   echo "mysql (default: 5.6)"
   echo "postgres (default: 9.6)"
+  echo "postgres with postgis (default: 9.6-2.5)"
   echo "redis (default: 4)"
   echo "memcached (default: 1.5)"
   echo "mongodb (default: 4.5)"
