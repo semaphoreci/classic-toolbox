@@ -1,3 +1,2 @@
 source ~/.toolbox/sem-version
 echo "source ~/.toolbox/sem-version" >> ~/.bashrc
-gem install semaphore_test_boosters
