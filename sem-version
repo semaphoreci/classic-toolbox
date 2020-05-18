@@ -41,6 +41,9 @@ version::change() {
 
   eval $command $language_version
   ch_status=$?
+  if [ "$command" == "rbenv global" ]; then
+    gem install semaphore_test_boosters
+  fi
 
   return $ch_status
 }
