@@ -2,6 +2,17 @@
 
 # Misc
 DATE_FORMAT='%H:%M %d/%m/%Y'
+declare -A sem_services
+sem_services['memcached']="1.5 1.6"
+sem_services['mysql']="5.5 5.6.52 5.6 5.6.50 5.7.27 5.7.31 5.7.32 5.7 5 8.0.22 8.0 8"
+sem_services['redis']="2.8.23 2.8 2 3.2.4 3.2.12 3.2 3 4.0.12 4.0.14 4.0 4 5.0.6 5.0.9 5.0 5 6.0.5 6.0.8 6.0 6"
+sem_services['mongo']="3.2.1 3.2 3.6.20 3.6 3 4.0.20 4.0 4.1.13 4.1 4.2.10 4.2 4.4.1 4.4 4"
+sem_services['elasticsearch']="1.7.6 1.7 1 2.4.6 2.4 2 5.4.3 5.4 5.5.2 5.5 5.6.16 5.6 5 6.5.1 6.5.4 6.5 6.8.1 6.8.13 6.8 6 7.1.1 7.1 7.2.0 7.2 7.2.1 7.2 7.3.1 7.3.2 7.3 7.4.2 7.4 7.5.0 7.5.1 7.5.2 7.5 7.6.0 7.6.2 7.6 7.7.0 7.7.1 7.7 7.8.1 7.8 7.9.0 7.9.2 7.9.3 7.9 7"
+sem_services['postgres']="9.4.26 9.4 9.5.15 9.5.23 9.5 9.6.6 9.6.11 9.6.18 9.6.19 9.6 9 10.0 10.5 10.6 10.7 10.11 10.12 10.13 10.14 10 11.0 11.2 11.5 11.6 11.7 11.8 11.9 11 12.1 12.2 12.3 12.4 12 13.0 13"
+sem_services['rabbitmq']="3.6.16 3.6 3.8.2 3.8.9 3.8 3"
+sem_services['cassandra']="3.11.3 3.11.8 3.11 3"
+sem_services['rethinkdb']="2.3.6 2.3 2.4.1 2.4 2"
+sem_services['postgis']="9.5-2.5 9.5-3.0 9.6-2.5 9.6-3.0 10-2.5 10-3.0 11-2.5 11-3.0 12-2.5 12-3.0 13-3.0"
 
 service::pull_image() {
   local image_name=$1
@@ -16,14 +27,36 @@ service::pull_image() {
 
   service::duration service::run_cmd docker pull $image_name download $(echo ${image_name%%:*})
 }
+service::check_version(){
+  local version="$2"
+  local image_name="$1"
+  local have_it=1
+  local local_versions="${sem_services[$image_name]}"
+  for i in ${local_versions[@]};do
+    if [ "$version" == "$i" ];then
+      have_it=0
+      break
+    fi
+  done
+########### Output message if we dont host the image
+#  if [ $have_it -eq 1 ]; then
+#    service::err "We dont provide version: $version. Available versions for $image_name: $local_versions"
+#  fi
+  echo $have_it
+}
+
 
 service::start_mysql() {
   service_version=$1
   shift
-  docker_params="$@"
+  local service_image='mysql'
+  if [ "$(service::check_version 'mysql' $service_version)" == "0" ]; then
+    service_image="registry.semaphoreci.com/$service_image"
+  fi
 
-  service::pull_image "mysql:$service_version"
-  docker_output=$(docker run $docker_params mysql:$service_version)
+  docker_params="$@"
+  service::pull_image "$service_image:$service_version"
+  docker_output=$(docker run $docker_params $service_image:$service_version)
   # run only if previous command exited successfully
   service::duration sem-dockerize 3306 boot mysql
 
@@ -36,10 +69,14 @@ service::start_mysql() {
 service::start_postgres() {
   service_version=$1
   shift
-  docker_params="$@"
+  local service_image='postgres'
+  if [ "$(service::check_version 'postgres' $service_version)" == "0" ]; then
+    service_image="registry.semaphoreci.com/$service_image"
+  fi
 
-  service::pull_image "postgres:$service_version"
-  docker_output=$(docker run $docker_params postgres:$service_version)
+  docker_params="$@"
+  service::pull_image "$service_image:$service_version"
+  docker_output=$(docker run $docker_params $service_image:$service_version)
   # run only if previous command exited successfully
   service::duration sem-dockerize 5432 boot postgres
   echo "done."
@@ -50,10 +87,16 @@ service::start_postgres() {
 service::start_postgis() {
   service_version=$1
   shift
-  docker_params="$@"
+  local service_image='postgis'
+  if [ "$(service::check_version 'postgis' $service_version)" == "0" ]; then
+    service_image="registry.semaphoreci.com/$service_image"
+  else
+    service_image="postgis/$service_image"
+  fi
 
-  service::pull_image "postgis/postgis:$service_version"
-  docker_output=$(docker run $docker_params "postgis/postgis:$service_version")
+  docker_params="$@"
+  service::pull_image "$service_image:$service_version"
+  docker_output=$(docker run $docker_params "$service_image:$service_version")
   # run only if previous command exited successfully
   service::duration sem-dockerize 5432 boot postgis
   echo "done."
@@ -64,9 +107,15 @@ service::start_postgis() {
 service::start_redis() {
   service_version=$1
   shift
+
+  local service_image='redis'
+  if [ "$(service::check_version 'redis' $service_version)" == "0" ]; then
+    service_image="registry.semaphoreci.com/$service_image"
+  fi
+
   docker_params="$@"
-  service::pull_image "redis:$service_version"
-  docker_output=$(docker run $docker_params redis:$service_version)
+  service::pull_image "$service_image:$service_version"
+  docker_output=$(docker run $docker_params $service_image:$service_version)
   # run only if previous command exited successfully
   service::duration sem-dockerize 6379 boot redis
 
@@ -78,9 +127,13 @@ service::start_redis() {
 
 service::start_memcached() {
   service_version="${1:-1.5}"
-  service::pull_image "memcached:$service_version"
+  local service_image='memcached'
+  if [ "$(service::check_version 'memcached' $service_version)" == "0" ]; then
+    service_image="registry.semaphoreci.com/$service_image"
+  fi
 
-  docker_output=$(docker run --net=host --rm --name memcached -d memcached:$service_version)
+  service::pull_image "$service_image:$service_version"
+  docker_output=$(docker run --net=host --rm --name memcached -d $service_image:$service_version)
   # run only if previous command exited successfully
   service::duration sem-dockerize 11211 boot memcached
 
@@ -93,10 +146,14 @@ service::start_memcached() {
 service::start_mongodb() {
   service_version=$1
   shift
-  docker_params="$@"
+  local service_image='mongo'
+  if [ "$(service::check_version 'mongo' $service_version)" == "0" ]; then
+    service_image="registry.semaphoreci.com/$service_image"
+  fi
 
-  service::pull_image "mongo:$service_version"
-  docker_output=$(docker run $docker_params mongo:$service_version)
+  docker_params="$@"
+  service::pull_image "$service_image:$service_version"
+  docker_output=$(docker run $docker_params $service_image:$service_version)
   # run only if previous command exited successfully
   service::duration sem-dockerize 27017 -timeout 30s 2>/dev/null boot mongodb
 
@@ -108,9 +165,13 @@ service::start_mongodb() {
 
 service::start_elasticsearch() {
   service_version="${1:-6.5.1}"
-  service::pull_image "elasticsearch:$service_version"
+  local service_image='elasticsearch'
+  if [ "$(service::check_version 'elasticsearch' $service_version)" == "0" ]; then
+    service_image="registry.semaphoreci.com/$service_image"
+  fi
 
-  docker_output=$(docker run --net=host --rm --name elasticsearch -e "discovery.type=single-node" -d elasticsearch:$service_version)
+  service::pull_image "$service_image:$service_version"
+  docker_output=$(docker run --net=host --rm --name elasticsearch -e "discovery.type=single-node" -d $service_image:$service_version)
 
   # run only if previous command exited successfully
   service::duration sem-dockerize 9200 boot elasticseach
@@ -123,9 +184,13 @@ service::start_elasticsearch() {
 
 service::start_rabbitmq() {
   service_version="${1:-3.8.2}"
-  service::pull_image "rabbitmq:$service_version"
+  local service_image='rabbitmq'
+  if [ "$(service::check_version 'rabbitmq' $service_version)" == "0" ]; then
+    service_image="registry.semaphoreci.com/$service_image"
+  fi
 
-  docker_output=$(docker run --net=host --rm --name rabbitmq --hostname rabbitmq -d rabbitmq:$service_version)
+  service::pull_image "$service_image:$service_version"
+  docker_output=$(docker run --net=host --rm --name rabbitmq --hostname rabbitmq -d $service_image:$service_version)
 
   # run only if previous command exited successfully
   service::duration sem-dockerize 5672 boot rabbitmq
@@ -138,9 +203,13 @@ service::start_rabbitmq() {
 
 service::start_cassandra() {
   service_version="${1:-3.11.3}"
-  service::pull_image "cassandra:$service_version"
+  local service_image='cassandra'
+  if [ "$(service::check_version 'cassandra' $service_version)" == "0" ]; then
+    service_image="registry.semaphoreci.com/$service_image"
+  fi
 
-  docker_output=$(docker run --net=host --rm --name cassandra -d cassandra:$service_version)
+  service::pull_image "$service_image:$service_version"
+  docker_output=$(docker run --net=host --rm --name cassandra -d $service_image:$service_version)
 
   # run only if previous command exited successfully
   service::duration sem-dockerize 9042 boot cassandra
@@ -153,9 +222,13 @@ service::start_cassandra() {
 
 service::start_rethinkdb() {
   service_version="${1:-2.3.6}"
-  service::pull_image "rethinkdb:$service_version"
+  local service_image='rethinkdb'
+  if [ "$(service::check_version 'rethinkdb' $service_version)" == "0" ]; then
+    service_image="registry.semaphoreci.com/$service_image"
+  fi
 
-  docker_output=$(docker run --net=host --rm --name rethinkdb -d rethinkdb:$service_version)
+  service::pull_image "$service_image:$service_version"
+  docker_output=$(docker run --net=host --rm --name rethinkdb -d $service_image:$service_version)
 
   # run only if previous command exited successfully
   service::duration sem-dockerize 28015 boot rethinkdb
@@ -165,8 +238,6 @@ service::start_rethinkdb() {
   echo "rethinkdb $service_version is accessible at 0.0.0.0:28015"
 
 }
-
-
 
 service::start() {
   service_name=$1
