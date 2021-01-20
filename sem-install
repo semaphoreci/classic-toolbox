@@ -31,6 +31,7 @@ install::install_ruby() {
 }
 
 install::install_php() {
+  sudo phpbrew self-update
   phpbrew known -u
   if [[ $(install::available) -eq 1 ]] ; then
     phpbrew -q install -j 4 ${language_version} +default +dbs +openssl -- --with-curl=/usr/local
