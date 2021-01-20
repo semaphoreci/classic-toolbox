@@ -46,6 +46,7 @@ install::install_php() {
     chmod +x ~/.phpbrew/php/php-${language_version}/bin/composer
   else
     install::download
+    phpbrew known -u
     tar -zxf ${language_version}.tar.gz
     rm -rf ${language_version}.tar.gz
     mv php-${language_version} ~/.phpbrew/php/
