@@ -83,11 +83,18 @@ version::change_java() {
 }
 
 version::change_php() {
-  if ! [ -d ~/.phpbrew/php/php-${language_version} ]; then
-    sem-install php ${language_version}
-  fi
-  version::change "phpbrew use"
+  [[ "$language_version" == "7.0" ]] && language_version="7.0.33"
+  [[ "$language_version" == "7.1" ]] && language_version="7.1.33"
+  [[ "$language_version" == "7.2" ]] && language_version="7.2.34"
+  [[ "$language_version" == "7.3" ]] && language_version="7.3.26"
+  [[ "$language_version" == "7.4" ]] && language_version="7.4.14"
+  [[ "$language_version" == "8.0" ]] || [[ "$language_version" == "8" ]] && language_version="8.0.1"
 
+  if ! [ -d ~/.phpbrew/php/php-"${language_version}" ]; then
+    sem-install php "${language_version}"
+  fi
+  language_version="php-${language_version}"
+  version::change "phpbrew switch"
   return $?
 }
 
