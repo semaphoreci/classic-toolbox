@@ -31,8 +31,8 @@ install::install_ruby() {
 }
 
 install::install_php() {
+  phpbrew known -u
   if [[ $(install::available) -eq 1 ]] ; then
-    phpbrew known -u
     phpbrew -q install -j 4 ${language_version} +default +dbs +openssl -- --with-curl=/usr/local
     phpbrew switch ${language_version}
     echo "date.timezone = UTC" >> ~/.phpbrew/php/php-${language_version}/etc/php.ini
@@ -46,7 +46,6 @@ install::install_php() {
     chmod +x ~/.phpbrew/php/php-${language_version}/bin/composer
   else
     install::download
-    phpbrew known -u
     tar -zxf ${language_version}.tar.gz
     rm -rf ${language_version}.tar.gz
     mv php-${language_version} ~/.phpbrew/php/
