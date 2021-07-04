@@ -1,11 +1,16 @@
+gem info semaphore_test_boosters | grep  semaphore_test_boosters
 sem-version ruby 2.5.3
 ruby --version
+gem info semaphore_test_boosters | grep  semaphore_test_boosters
 sem-version ruby 2.5.2
 ruby --version
+gem info semaphore_test_boosters | grep  semaphore_test_boosters
 sem-version ruby 2.5.3
 ruby --version
+gem info semaphore_test_boosters | grep  semaphore_test_boosters
 sem-version ruby 2.3.7
 ruby --version
+gem info semaphore_test_boosters | grep  semaphore_test_boosters
 sem-version c 8
 gcc --version
 sem-version c 7

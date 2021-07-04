@@ -20,6 +20,7 @@ install::install_ruby() {
     rbenv global ${language_version}
     gem update system
     gem install bundler:2.0.1 --no-document
+    gem install semaphore_test_boosters
   else
     install::download
     tar -zxf ${language_version}.tar.gz

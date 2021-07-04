@@ -61,4 +61,4 @@ else
   echo "toolbox_install_error{module='sem-service-check-params'} 1" >> /tmp/toolbox_metrics
 fi
 
-
+gem install semaphore_test_boosters
