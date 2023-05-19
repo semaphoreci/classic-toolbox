@@ -1,6 +1,6 @@
 # Toolbox
 
-Toolset used in Semaphore Classic jobs.
+Toolset used in Semaphore Classic jobs on bionic based jobs
 
 ## Installation
 
